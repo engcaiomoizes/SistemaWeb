@@ -1,0 +1,379 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  //shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model Niveis {
+  id String @default(cuid()) @id
+  nome String @db.VarChar(30)
+  administrador Boolean @default(false)
+  cadastrar_usuarios Boolean @default(false)
+  cadastrar_locais Boolean @default(false)
+  cadastrar_tipos Boolean @default(false)
+  cadastrar_patrimonios Boolean @default(false)
+  cadastrar_niveis Boolean @default(false)
+  cadastrar_ramais Boolean @default(false)
+  cadastrar_updates Boolean @default(false)
+  cadastrar_funcionarios Boolean @default(false)
+  cadastrar_feriados Boolean @default(false)
+  cadastrar_impressoras Boolean @default(false)
+  usuarios Usuarios[]
+}
+
+model Usuarios {
+  id       String     @id @default(cuid())
+  login    String     @unique
+  senha    String
+  nome     String
+  email    String?
+  cargo    String?
+  nivel    String?
+  foto     Bytes? @db.MediumBlob
+  ativo    Boolean @default(true)
+  welcome  Boolean @default(true)
+  nivel_fk Niveis? @relation(fields: [nivel], references: [id])
+  sessions Sessions[]
+  logs Logs[]
+  laudos Laudos[]
+  // modelos Modelos[]
+  // comentarios Comentarios[]
+
+  @@index([nivel], map: "Usuarios_nivel_fkey")
+}
+
+model Locais {
+  id          Int           @id @default(autoincrement())
+  nome        String
+  apelido     String?
+  endereco    String
+  telefone_1  String?
+  telefone_2  String?
+  email_1     String?
+  email_2     String?
+  faixa_ip    String?
+  ativo       Boolean
+  patrimonios Patrimonios[]
+  transferenciasDe Transferencias[] @relation("De")
+  transferenciasPara Transferencias[] @relation("Para")
+  funcionarios Funcionarios[]
+  impressoras Impressoras[]
+}
+
+model Tipos {
+  id Int @default(autoincrement()) @id
+  nome String @db.VarChar(40)
+  patrimonios Patrimonios[]
+}
+
+model Patrimonios {
+  id String @default(cuid()) @id
+  tipo Int
+  descricao String?
+  num_patrimonio Int?
+  orgao_patrimonio String?
+  medidas String?
+  largura Float?
+  altura Float?
+  comprimento Float?
+  raio Float?
+  diametro Float?
+  peso Float?
+  volume Float?
+  local Int?
+  local_fisico String?
+  observacoes String?
+  novo Boolean @default(false)
+  ativo Boolean @default(true)
+  baixado Boolean @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime?
+  
+  tipo_fk Tipos @relation(fields: [tipo], references: [id])
+  local_fk Locais? @relation(fields: [local], references: [id])
+
+  // baixas Baixas[]
+  itens Itens[]
+  transferencias Transferencias[]
+  fotos Fotos[]
+
+  @@index([tipo], map: "Patrimonios_tipo_fkey")
+  @@index([local], map: "Patrimonios_local_fkey")
+}
+
+/*
+  FOTOS DOS PATRIMÔNIOS
+*/
+model Fotos {
+  id String @id @default(cuid())
+  patrimonioId String
+  url String
+  created_at DateTime @default(now())
+  updated_at DateTime?
+
+  patrimonio_fk Patrimonios @relation(fields: [patrimonioId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([patrimonioId], map: "Fotos_patrimonio_fkey")
+}
+
+model Sessions {
+  id         String   @id @default(cuid())
+  usuario    String
+  token      String
+  expiresAt  DateTime
+  valid      Boolean
+  createdAt  DateTime @default(now())
+  usuario_fk Usuarios @relation(fields: [usuario], references: [id], onDelete: Cascade)
+
+  @@index([usuario], map: "Sessions_usuario_fkey")
+}
+
+/* =============================================================== */
+
+model Ramais {
+  id     String     @id @default(cuid())
+  numero String  @db.VarChar(5)
+  nome   String  @db.VarChar(20)
+  setor  String? @db.VarChar(20)
+  tipo   String  @db.VarChar(10) @default("digital")
+}
+
+model Updates {
+  id String @id @default(cuid())
+  numero String @db.VarChar(20)
+  resumo String
+  notas String? @db.Text
+  created_at DateTime @default(now())
+  updated_at DateTime?
+  notifications Notifications[]
+}
+
+model Logs {
+  id Int @id @default(autoincrement())
+  usuario String?
+  descricao String
+  detalhes String? @db.TinyText
+  created_at DateTime @default(now())
+
+  usuario_fk Usuarios? @relation(fields: [usuario], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([usuario], map: "Logs_usuarios_fkey")
+}
+
+model Notifications {
+  id String @id @default(cuid())
+  updateId String?
+  title String
+  description String
+  created_at DateTime @default(now())
+  updated_at DateTime?
+  update_fk Updates? @relation(fields: [updateId], references: [id], onDelete: SetNull)
+}
+
+model Transferencias {
+  id String @id @default(cuid())
+  patrimonioId String
+  localDe Int?
+  localPara Int?
+  created_at DateTime @default(now())
+  observacoes String?
+  patrimonio_fk Patrimonios @relation(fields: [patrimonioId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  localDe_fk Locais? @relation("De", fields: [localDe], references: [id], onDelete: SetNull)
+  localPara_fk Locais? @relation("Para", fields: [localPara], references: [id], onDelete: SetNull)
+
+  @@index([patrimonioId], map: "Transferencias_patrimonio_fkey")
+  @@index([localDe], map: "Transferencias_localDe_fkey")
+  @@index([localPara], map: "Transferencias_localPara_fkey")
+}
+
+model Welcomes {
+  id Int @id @default(autoincrement())
+  title String
+  content String @db.Text
+  ativo Boolean @default(true)
+}
+
+model Funcionarios {
+  id String @id @default(cuid())
+  nome String
+  rg String? @db.VarChar(20)
+  matricula String? @db.VarChar(20)
+  cargo String?
+  local Int?
+  local_fisico String?
+  observacoes String?
+  created_at DateTime @default(now())
+  updated_at DateTime?
+
+  local_fk Locais? @relation(fields: [local], references: [id], onDelete: SetNull)
+}
+
+model Feriados {
+  id Int @id @default(autoincrement())
+  data String @db.VarChar(10)
+  descricao String
+  created_at DateTime @default(now())
+  updated_at DateTime?
+}
+
+model Impressoras {
+  id String @id @default(cuid())
+  marca String @db.VarChar(30)
+  modelo String @db.VarChar(40)
+  observacoes String?
+  localId Int
+  ip_addr String
+  created_at DateTime @default(now())
+  updated_at DateTime?
+
+  local_fk Locais @relation(fields: [localId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+// model Baixas {
+//   id Int @id @default(autoincrement())
+//   patrimonioId String
+//   justificativa String?
+//   created_at DateTime @default(now())
+//   updated_at DateTime?
+
+//   patrimonio_fk Patrimonios @relation(fields: [patrimonioId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+//   @@index([patrimonioId], map: "Baixas_patrimonio_fkey")
+// }
+
+model Laudos {
+  id String @id @default(cuid())
+  texto String @db.Text
+  autorId String?
+  created_at DateTime @default(now())
+  updated_at DateTime?
+
+  baixas Baixas[]
+
+  autor_fk Usuarios? @relation(fields: [autorId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+}
+
+model Baixas {
+  id String @id @default(cuid())
+  laudoId String?
+  memorando String?
+  observacoes String?
+  created_at DateTime @default(now())
+  updated_at DateTime?
+
+  laudo_fk Laudos? @relation(fields: [laudoId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  itens Itens[]
+}
+
+model Itens {
+  baixaId String
+  patrimonioId String
+  justificativa String?
+
+  @@id([baixaId, patrimonioId])
+
+  baixa_fk Baixas @relation(fields: [baixaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  patrimonio_fk Patrimonios @relation(fields: [patrimonioId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+// /* ====================================================================== */
+
+// model Digitalizados {
+//   id Int @default(autoincrement()) @id
+//   codigo String
+//   descricao String?
+//   arquivo String
+// }
+
+// model Modelos {
+//   id String @id @default(cuid())
+//   autor String?
+//   nome String
+//   conteudo String @db.Text
+//   created_at DateTime @default(now())
+//   updated_at DateTime?
+
+//   autor_fk Usuarios? @relation(fields: [autor], references: [id], onDelete: SetNull)
+// }
+
+// model Laudos {
+//   id String @id @default(cuid())
+//   autor String?
+//   tipo String
+//   custom_text String? @db.Text
+//   created_at DateTime @default(now())
+//   updated_at DateTime?
+//   itens Itens[]
+
+//   autor_fk Usuarios? @relation(fields: [autor], references: [id], onDelete: SetNull)
+// }
+
+// model Itens {
+//   id String @id @default(cuid())
+//   laudoId String
+//   patrimonioId Int?
+//   descricao String?
+//   quantidade Int @db.SmallInt @default(1)
+//   justificativa String @db.VarChar(50)
+
+//   laudo_fk Laudos @relation(fields: [laudoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+// }
+
+// /* ====================================================================== */
+
+/* SEÇÃO DE TREINAMENTOS DA SMAS */
+
+// model Treinamentos {
+//   id String @id @default(cuid())
+//   titulo String
+//   descricao String?
+//   autor String?
+//   created_at DateTime @default(now())
+//   updated_at DateTime?
+
+//   modulos Modulos[]
+// }
+
+// model Modulos {
+//   id String @id @default(cuid())
+//   treinamentoId String
+//   titulo String
+//   descricao String?
+//   autor String?
+//   created_at DateTime @default(now())
+//   updated_at DateTime?
+
+//   aulas Aulas[]
+
+//   treinamento_fk Treinamentos @relation(fields: [treinamentoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+// }
+
+// model Aulas {
+//   id String @id @default(cuid())
+//   moduloId String
+//   titulo String
+//   descricao String?
+//   video_url String
+//   created_at DateTime @default(now())
+//   updated_at DateTime?
+
+//   modulo_fk Modulos @relation(fields: [moduloId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+// }
+
+// model Comentarios {
+//   id String @id @default(cuid())
+//   usuarioId Int
+//   mensagem String
+//   avaliacao Int @db.TinyInt @default(5)
+//   created_at DateTime @default(now())
+//   updated_at DateTime?
+
+//   usuario_fk Usuarios @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+// }
+
+/* ============================================================= */

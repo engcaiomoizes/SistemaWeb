@@ -1,0 +1,5 @@
+.env
+./app/.next
+./app/node_modules
+./app/.env
+./python/.env
