@@ -507,9 +507,9 @@ export default function Funcionarios() {
             </div>
         </div>
 
-        <div className={`${hidden ? 'hidden' : ''} fixed top-0 left-0 z-50`}>
+        <div className={`${hidden ? 'hidden' : ''} fixed top-0 left-0 z-40`}>
             <div className="fixed bg-black opacity-40 w-full h-full" onClick={() => setHidden(true)}></div>
-            <div className="fixed bg-gray-800 shadow-lg p-10 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg max-h-[720px] min-w-96 overflow-y-auto">
+            <div className="fixed bg-gray-800 shadow-lg p-6 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg max-h-[720px] min-w-96">
                 <HTML2Canvas funcionarios={selecionados} ano={ano} mes={mes} title={title} />
             </div>
         </div>

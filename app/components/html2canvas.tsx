@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from "react";
-import { getNomeMes } from "@/lib/string";
+import { useEffect, useState } from "react";
 import { Funcionario } from "@/types/funcionario";
 import MultiSelect from "./multiSelect";
 
@@ -29,8 +28,6 @@ interface Option {
 }
 
 export default function HTML2Canvas(props: Props) {
-    const pdfRef = useRef<HTMLDivElement>(null);
-
     const [holidays, setHolidays] = useState<Feriado[]>([]);
 
     const [gerando, setGerando] = useState(false);
@@ -53,17 +50,23 @@ export default function HTML2Canvas(props: Props) {
     }, [props.funcionarios, props.ano, props.mes]);
 
     const generatePDF = async () => {
-        const htmlContent = pdfRef.current?.outerHTML;
-
         try {
             setGerando(true);
 
-            const response = await fetch('/api/generate-pdf', {
+            const ids = props.funcionarios.map(funcionario => funcionario.id);
+            const dias_abertos = selectedOptions.map(opt => opt.value);
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/folhas-ponto`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ html: htmlContent }),
+                body: JSON.stringify({
+                    ano: props.ano,
+                    mes: props.mes,
+                    funcionarios: ids,
+                    dias_abertos: dias_abertos,
+                }),
             });
 
             if (response.ok) {
@@ -73,7 +76,6 @@ export default function HTML2Canvas(props: Props) {
                 const a = document.createElement('a');
                 a.href = url;
                 a.target = '_blank';
-                //a.download = `${props.title}.pdf`;
 
                 document.body.appendChild(a);
                 a.click();
@@ -91,12 +93,9 @@ export default function HTML2Canvas(props: Props) {
     };
 
     const [weekendDays, setWeekendDays] = useState<Day[]>([]);
-    const [daysInMonth, setDaysInMonth] = useState(0);
 
     const getWeekendDays = () => {
         const daysInMonth = new Date(props.ano, props.mes, 0).getDate(); // Obtém o número de dias no mês
-
-        setDaysInMonth(daysInMonth);
 
         const weekendDaysArray: any = [];
 
@@ -135,16 +134,12 @@ export default function HTML2Canvas(props: Props) {
         setSelectedOptions(selected);
     };
 
-    const isDaySelected = (day: number): boolean => {
-        return selectedOptions.some(option => option.value === day);
-    };
-
     return (
         <>
         {/* <div className="flex justify-center p-10">
             <div className="container">*/}
-            <div className="flex items-center space-x-2">
-                <button onClick={generatePDF} disabled={gerando} className="cursor-pointer border rounded py-1 px-4 mb-2 bg-teal-500 border-teal-500 text-white font-medium uppercase hover:bg-teal-600 hover:border-teal-600 transition ease-in-out duration-150">
+            <div className="flex items-center justify-center gap-2">
+                <button onClick={generatePDF} disabled={gerando} className="cursor-pointer border rounded py-1 px-4 bg-teal-500 border-teal-500 text-white font-medium uppercase hover:bg-teal-600 hover:border-teal-600 transition ease-in-out duration-150">
                     {
                         gerando ?
                         <div role="status" className="flex justify-center">
@@ -155,133 +150,16 @@ export default function HTML2Canvas(props: Props) {
                         'Gerar'
                     }
                 </button> 
-                <button onClick={() => setOpen(!open)} className="cursor-pointer border rounded p-1 mb-2 bg-teal-500 border-teal-500 text-white font-medium uppercase hover:bg-teal-600 hover:border-teal-600 transition ease-in-out duration-150">
+                <button onClick={() => setOpen(!open)} className="cursor-pointer border rounded p-1 bg-teal-500 border-teal-500 text-white font-medium uppercase hover:bg-teal-600 hover:border-teal-600 transition ease-in-out duration-150">
                     <svg className="w-6 h-6 text-white dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13v-2a1 1 0 0 0-1-1h-.757l-.707-1.707.535-.536a1 1 0 0 0 0-1.414l-1.414-1.414a1 1 0 0 0-1.414 0l-.536.535L14 4.757V4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v.757l-1.707.707-.536-.535a1 1 0 0 0-1.414 0L4.929 6.343a1 1 0 0 0 0 1.414l.536.536L4.757 10H4a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h.757l.707 1.707-.535.536a1 1 0 0 0 0 1.414l1.414 1.414a1 1 0 0 0 1.414 0l.536-.535 1.707.707V20a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-.757l1.707-.708.536.536a1 1 0 0 0 1.414 0l1.414-1.414a1 1 0 0 0 0-1.414l-.535-.536.707-1.707H20a1 1 0 0 0 1-1Z"/>
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
                     </svg>
                 </button>
-                <div className={`${open ? '' : 'hidden'} flex w-96 max-w-96 mb-2`}>
+                <div className={`${open ? '' : 'hidden'} flex w-96 max-w-96`}>
                     <MultiSelect msStyle={'w-full'} placeholder="Abrir sábados e domingos..." options={options} selectedOptions={selectedOptions} onChange={handleChange} />
                 </div>
             </div>
-                {
-                    props.funcionarios &&
-                    <div className={`bg-white`} ref={pdfRef}>
-                        {
-                            props.funcionarios.length > 0 &&
-                            props.funcionarios.map((item, index) => (
-                                <>
-                                <div className="relative border bg-transparent grid grid-rows-[auto_1fr_auto] w-[21cm] h-[29.7cm] py-4">
-                                    <div className="w-full flex justify-center">
-                                        <object data={`${process.env.NEXT_PUBLIC_SITE_URL}/static/img/header.svg`} type="image/svg+xml" className="w-[85%]"></object>
-                                    </div>
-                                    <div key={index} className={``}>
-                                            <div className="px-16 flex flex-col space-y-2 mb-4 font-times">
-                                                <span className="uppercase font-bold">Nome: {item.nome}</span>
-                                                <span className="uppercase font-bold">Matrícula: {item.matricula}</span>
-                                                <span className="uppercase font-bold">Cargo/Função: {item.cargo}</span>
-                                                <span className="uppercase font-bold">Sede de serviço: {item.local_fk?.apelido ? item.local_fk?.apelido : item.local_fk?.nome}</span>
-                                                <span className="uppercase font-bold">RG: {item.rg}</span>
-                                            </div>
-                                            <div className="flex flex-col px-10 font-times">
-                                                <span className="text-end font-bold px-6">Período: 01 a {daysInMonth} de {getNomeMes(props.mes)} de {props.ano}</span>
-                                                <table className="w-full">
-                                                    <thead>
-                                                        <tr>
-                                                            <th colSpan={4} className="text-sm border border-black px-1">Primeiro Período</th>
-                                                            <th colSpan={3} className="text-sm border border-black px-1">Segundo Período</th>
-                                                        </tr>
-                                                        <tr>
-                                                            <th className="text-sm border border-black px-1 w-8">Dia</th>
-                                                            <th className="text-sm border border-black px-1 w-24">Hora Entrada</th>
-                                                            <th className="text-sm border border-black px-1 w-24">Saída Almoço</th>
-                                                            <th className="text-sm border border-black">Assinatura</th>
-                                                            <th className="text-sm border border-black px-1 w-24">Retorno Almoço</th>
-                                                            <th className="text-sm border border-black px-1 w-24">Hora Saída</th>
-                                                            <th className="text-sm border border-black">Assinatura</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {
-                                                            weekendDays.length > 0 &&
-                                                            weekendDays.map((item, index) => (
-                                                                <tr key={index}>
-                                                                    <td className="text-sm border border-black text-center font-bold">{item.day.toString().padStart(2, '0')}</td>
-                                                                    <td className="text-sm border border-black text-center font-bold">
-                                                                        {
-                                                                            !isDaySelected(item.day) && item.weekend === 0 ?
-                                                                            'Domingo'
-                                                                            :
-                                                                            !isDaySelected(item.day) && item.weekend === 6 ?
-                                                                            'Sábado'
-                                                                            :
-                                                                            item.holiday ?
-                                                                            'FERIADO'
-                                                                            :
-                                                                            ''
-                                                                        }
-                                                                    </td>
-                                                                    <td className="text-sm overflow-hidden text-clip border border-black text-center max-w-8">
-                                                                        {
-                                                                            !isDaySelected(item.day) && (item.weekend === 0 || item.weekend === 6 || item.holiday) ?
-                                                                            '############'
-                                                                            :
-                                                                            ''
-                                                                        }
-                                                                    </td>
-                                                                    <td className="text-sm overflow-hidden text-clip border border-black text-center max-w-16">
-                                                                        {
-                                                                            !isDaySelected(item.day) && (item.weekend === 0 || item.weekend === 6 || item.holiday) ?
-                                                                            '###################'
-                                                                            :
-                                                                            ''
-                                                                        }
-                                                                    </td>
-                                                                    <td className="text-sm overflow-hidden text-clip border border-black text-center max-w-8">
-                                                                        {
-                                                                            !isDaySelected(item.day) && (item.weekend === 0 || item.weekend === 6 || item.holiday) ?
-                                                                            '############'
-                                                                            :
-                                                                            ''
-                                                                        }
-                                                                    </td>
-                                                                    <td className="text-sm overflow-hidden text-clip border border-black text-center max-w-8">
-                                                                        {
-                                                                            !isDaySelected(item.day) && (item.weekend === 0 || item.weekend === 6 || item.holiday) ?
-                                                                            '############'
-                                                                            :
-                                                                            ''
-                                                                        }
-                                                                    </td>
-                                                                    <td className="text-sm overflow-hidden text-clip border border-black text-center max-w-16">
-                                                                        {
-                                                                            !isDaySelected(item.day) && (item.weekend === 0 || item.weekend === 6 || item.holiday) ?
-                                                                            '###################'
-                                                                            :
-                                                                            ''
-                                                                        }
-                                                                    </td>
-                                                                </tr>
-                                                            ))
-                                                        }
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                    </div>
-                                    <div className={`w-full flex justify-center`}>
-                                        <object data={`${process.env.NEXT_PUBLIC_SITE_URL}/static/img/footer.svg`} type="image/svg+xml" className=""></object>
-                                    </div>
-                                </div>
-                                {
-                                    (index < props.funcionarios.length - 1) &&
-                                    <div className="page-break"></div>
-                                }
-                                </>
-                            ))
-                        }
-                    </div>
-                }
             {/* </div>
         </div> */}
         </>

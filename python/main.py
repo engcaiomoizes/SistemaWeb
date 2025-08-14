@@ -6,15 +6,18 @@ import os, zipfile, shutil
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 import fitz
 import uuid
+import cairosvg
+from pydantic import BaseModel
 
 # Dependências relatório MySQL
 from db.mysql import get_connection
 from relatorios.usuarios import gerar_pdf_com_tabela as relatorio_usuarios
 from relatorios.impressoras import gerar_pdf_com_tabela as relatorio_impressoras
 from relatorios.ramais import gerar_pdf_com_tabela as gerar_folha_ramal
-from relatorios.folha_ponto import gerar_folha_ponto
-from relatorios.folha_ponto import gerar_pdf_com_tabela as tabela_folha
+from relatorios.folha_ponto import gerar_folhas
 import aiofiles
+
+from relatorios.patrimonios import gerar_relatorio as relatorio_patrimonios
 
 app = FastAPI()
 
@@ -139,7 +142,7 @@ def gerar_relatorio_usuarios():
 
 # --- Rota 5: Gerar relatório de Impressoras ---
 @app.get("/relatorio-impressoras")
-def gerar_relatorio_usuarios():
+def gerar_relatorio_impressoras():
     try:
         with get_connection() as conn:
             with conn.cursor() as cursor:
@@ -151,6 +154,43 @@ def gerar_relatorio_usuarios():
     # pdf_path = gerar_tabela(dados_novos, UPLOAD_FOLDER)
     pdf_path = relatorio_impressoras(dados, os.path.join(UPLOAD_FOLDER, "relatorio_impressoras.pdf"))
     return FileResponse(pdf_path, filename="relatorio_impressoras.pdf", media_type="application/pdf")
+
+class RequestBodyPatrimonios(BaseModel):
+    tipos: list[int]
+    locais: list[int]
+
+# --- Rota 6: Gerar relatório de Patrimônios ---
+@app.post("/relatorio-patrimonios")
+def gerar_relatorio_patrimonios(request: RequestBodyPatrimonios):
+    tipos = request.tipos
+    locais = request.locais
+
+    where_clauses = []
+    parametros = []
+
+    if tipos:
+        tipos_placeholders = ', '.join(['%s'] * len(tipos))
+        where_clauses.append(f"t.id IN ({tipos_placeholders})")
+        parametros.extend(tipos)
+    
+    if locais:
+        locais_placeholders = ', '.join(['%s'] * len(locais))
+        where_clauses.append(f"l.id IN ({locais_placeholders})")
+        parametros.extend(locais)
+    
+    where_clause = " AND ".join(where_clauses) if where_clauses else "1=1"
+    
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(f"SELECT CONCAT(IFNULL(p.num_patrimonio, ''), ' ', IFNULL(p.orgao_patrimonio, '')) AS patrimonio, t.nome AS tipo_nome, p.descricao, l.nome AS nome_local, l.apelido FROM Patrimonios p INNER JOIN Tipos t ON t.id = p.tipo INNER JOIN Locais l ON l.id = p.local WHERE {where_clause}", parametros)
+                dados = cursor.fetchall()
+    except Exception as e:
+        return {"erro": f"Erro ao consultar MySQL: {str(e)}"}
+    
+    # pdf_path = gerar_tabela(dados_novos, UPLOAD_FOLDER)
+    pdf_path = relatorio_patrimonios(dados, os.path.join(UPLOAD_FOLDER, "relatorio_patrimonios.pdf"))
+    return FileResponse(pdf_path, filename="relatorio_patrimonios.pdf", media_type="application/pdf")
 
 @app.get("/folha-ramal")
 def folha_ramal():
@@ -173,11 +213,36 @@ dados_funcionarios = {
     "rg": "55.832.638-9"
 }
 
-@app.get("/folha-ponto")
-def folha_ponto():
-    # pdf_path = tabela_folha(dados_funcionario=dados_funcionarios, ano=2025, mes=7, path_destino=UPLOAD_FOLDER)
-    pdf_path = tabela_folha(ano=2025, mes=7, caminho_saida=os.path.join(UPLOAD_FOLDER, "folha_ponto.pdf"))
-    return FileResponse(pdf_path, filename="folha_ponto.pdf", media_type="application/pdf")
+class RequestBody(BaseModel):
+    ano: int
+    mes: int
+    funcionarios: list[str]
+    dias_abertos: list[int]
+
+@app.post("/folhas-ponto")
+def folhas_ponto(request: RequestBody):
+    ano = request.ano
+    mes = request.mes
+    funcionarios = request.funcionarios
+    dias_abertos = request.dias_abertos
+
+    placeholders = ', '.join(['%s'] * len(funcionarios))
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(f"SELECT f.nome, f.matricula, f.cargo, l.nome AS local_nome, l.apelido, f.rg FROM Funcionarios f LEFT JOIN Locais l ON l.id = f.local WHERE f.id IN ({placeholders})", funcionarios)
+                dados = cursor.fetchall()
+                cursor.execute("SELECT data, descricao FROM Feriados")
+                feriados = cursor.fetchall()
+    except Exception as e:
+        return { "erro": f"Erro ao consultar MySQL: {str(e)}" }
+    
+    pdf_path = gerar_folhas(ano=ano, mes=mes, dados=dados, holidays=feriados, dias_abertos=dias_abertos, caminho_saida=os.path.join(UPLOAD_FOLDER, f"FOLHAS - {mes:02d}-{ano}.pdf"))
+    return FileResponse(pdf_path, filename=f"FOLHAS - {mes:02d}-{ano}.pdf", media_type="application/pdf")
+
+@app.post("/svg-to-png")
+def svg_to_png(caminho_svg, caminho_png):
+    cairosvg.svg2png(url=caminho_svg, write_to=caminho_png)
 
 @app.post("/upload")
 async def upload_pdf(file: UploadFile = File(...)):

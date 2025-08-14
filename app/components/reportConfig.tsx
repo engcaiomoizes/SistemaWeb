@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import MultiSelect from "./multiSelect";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import MyDocument from "./patrimoniosPdf";
+import { Loader2 } from "lucide-react";
 
 interface Option {
     value: number;
@@ -9,39 +10,19 @@ interface Option {
 }
 
 export default function ReportConfig(props: any) {
-    const [patrimonios, setPatrimonios] = useState<any[]>([]);
-    const [count, setCount] = useState(0);
-    
     const [selectedOptions, setSelectedOptions] = useState<Option[]>([]);
     const [selectedLocais, setSelectedLocais] = useState<Option[]>([]);
 
     const [options, setOptions] = useState<Option[]>([]);
     const [locais, setLocais] = useState<Option[]>([]);
 
-    const handleLoad = useCallback(async () => {
-        try {
-            const arrOptions = selectedOptions.map(item => `${encodeURIComponent(item.value)}`).join(',');
-            const arrLocais = selectedLocais.map(item => `${encodeURIComponent(item.value)}`).join(',');
-
-            const response = await fetch(
-                `/api/patrimonios?${arrOptions ? `&options=${arrOptions}` : ''}${arrLocais ? `&locais=${arrLocais}` : ''}`
-            );
-            if (!response.ok) {
-                throw new Error(`Erro ao buscar patrimônios: ${response.status} - ${response.statusText}`);
-            }
-            const data = await response.json();
-            setPatrimonios(data.response);
-            setCount(data.count);
-            console.log(data);
-        } catch (err: any) {
-            console.log(err.message);
-        } finally {
-            //
-        }
-    }, [count, selectedOptions, selectedLocais]);
+    const [gerando, setGerando] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const handleTipos = async () => {
         try {
+            setLoading(true);
+
             const response = await fetch(`/api/tipos`);
 
             const data = await response.json();
@@ -58,11 +39,15 @@ export default function ReportConfig(props: any) {
             }
         } catch (err) {
             //
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleLocais = async () => {
         try {
+            setLoading(true);
+
             const response = await fetch(`/api/locais`);
 
             const data = await response.json();
@@ -79,33 +64,60 @@ export default function ReportConfig(props: any) {
             }
         } catch (err) {
             //
+        } finally {
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        handleLoad();
         handleLocais();
         handleTipos();
-    }, [count, handleLoad, selectedOptions, selectedLocais]);
+    }, []);
 
     const handleChange = (selected: any) => {
         setSelectedOptions(selected);
-        setGerar(false);
     };
 
     const handleChangeLocais = (selected: any) => {
         setSelectedLocais(selected);
-        setGerar(false);
     };
 
-    const [gerar, setGerar] = useState(false);
-    const [pdfKey, setPdfKey] = useState(0);
+    const handleGerar = async () => {
+        const tipos_ids = selectedOptions.map(tipo => tipo.value);
+        const locais_ids = selectedLocais.map(local => local.value);
 
-    const handleGerar = () => {
-        setGerar(true);
-        setPdfKey(prevKey => prevKey + 1);
-        //handleLoad();
-        console.log(patrimonios);
+        try {
+            setGerando(true);
+
+            const response = await fetch (`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/relatorio-patrimonios`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    tipos: tipos_ids,
+                    locais: locais_ids,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Ocorreu um erro inesperado.");
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setGerando(false);
+        }
     };
 
     return (
@@ -121,15 +133,14 @@ export default function ReportConfig(props: any) {
                 <div className="flex flex-col justify-center items-center space-y-4 text-white">
                     <MultiSelect msStyle={'w-full text-gray-800'} placeholder="Selecione o tipo..." options={options} selectedOptions={selectedOptions} onChange={handleChange} />
                     <MultiSelect msStyle={'w-full text-gray-800'} placeholder="Selecione o local..." options={locais} selectedOptions={selectedLocais} onChange={handleChangeLocais} />
-                    <button onClick={handleGerar} className="justify-self-end text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-semibold rounded-lg text-xs uppercase px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Gerar relatório</button>
-                    {
-                        gerar &&
-                        <PDFDownloadLink key={pdfKey} document={<MyDocument data={patrimonios} />} fileName="patrimonios.pdf">
-                            {({ blob, url, loading, error }) =>
-                            loading ? <button disabled className="justify-self-end text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-semibold rounded-lg text-xs uppercase px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Gerando relatório...</button> : <button className="justify-self-end text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-semibold rounded-lg text-xs uppercase px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Baixar relatório</button>
-                            }
-                        </PDFDownloadLink>
-                    }
+                    <button onClick={handleGerar} className="justify-self-end text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-semibold rounded-lg text-xs uppercase px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                        {
+                            gerando ?
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            :
+                            'Gerar relatório'
+                        }
+                    </button>
                 </div>
             </div>
         </div>
