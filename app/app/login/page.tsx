@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { SyntheticEvent, useEffect } from "react";
 import { useState } from "react";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function Login() {
     const [message, setMessage] = useState('');
@@ -19,6 +20,8 @@ export default function Login() {
 
     // Forgot Password
     const [isOpen, setIsOpen] = useState(false);
+
+    const [passView, setPassView] = useState(false);
 
     useEffect(() => {
         const storedMessage = sessionStorage.getItem('message');
@@ -81,7 +84,8 @@ export default function Login() {
                                 </div>
                                 <div className="flex flex-col group relative w-full h-16 mb-2">
                                     <label htmlFor="senha" className={`text-foreground font-bold absolute bottom-1.5 z-10 cursor-text group-focus-within:text-teal-500 group-focus-within:text-sm group-focus-within:cursor-default group-focus-within:-translate-y-8 ${senha ? '-translate-y-8 text-sm' : ''} transition-all ease-in-out duration-300`}>Senha</label>
-                                    <input type="password" name="senha" id="senha" value={senha} onChange={(e) => setSenha(e.target.value)} className="absolute bottom-0 border-b outline-none dark:bg-gray-800 focus:border-b-2 focus:border-teal-500 w-full py-1.5" required />
+                                    <input type={`${passView ? 'text' : 'password'}`} name="senha" id="senha" value={senha} onChange={(e) => setSenha(e.target.value)} className="absolute bottom-0 border-b outline-none dark:bg-gray-800 focus:border-b-2 focus:border-teal-500 w-full py-1.5 pe-8" required />
+                                    <button type="button" onClick={() => setPassView(prev => !prev)} className={`cursor-pointer absolute bottom-2 end-2 ${passView ? 'text-teal-500' : 'text-gray-500'}`}>{passView ? <FaEye /> : <FaEyeSlash />}</button>
                                 </div>
                                 <div className="flex items-center justify-end mt-4">
                                     <span onClick={() => setIsOpen(true)} className="cursor-pointer text-sm font-medium text-primary-600 hover:underline hover:text-teal-500 dark:text-primary-500">Esqueceu sua senha?</span>

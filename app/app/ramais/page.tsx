@@ -7,6 +7,7 @@ import FolhaRamal from "@/components/pdf/folhaRamal";
 import RamaisPDF from "@/components/pdf/ramais";
 import { PDFRef } from "@/lib/extras";
 import { normalizar } from "@/lib/string";
+import { Local } from "@/types/locais";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -43,6 +44,9 @@ export default function Ramais() {
     // Folha
     const [gerandoFolha, setGerandoFolha] = useState(false);
 
+    const [locais, setLocais] = useState<Local[]>([]);
+    const [selectedLocal, setSelectedLocal] = useState<number>();
+
     useEffect(() => {
         const storedMessage = sessionStorage.getItem('message');
         if (storedMessage) {
@@ -52,11 +56,13 @@ export default function Ramais() {
         }
     }, []);
 
-    const handleReload = useCallback(async () => {
+    const handleReload = async () => {
         try {
+            setLoading(true);
+            
             const response = await fetch(
                 // `/api/ramais?page=${currentPage}&limit=${ITEMS_PER_PAGE}${searchTerm ? `&searchTerm=${searchTerm}` : ''}${field != '' ? `&orderBy=${field}` : ''}${order != '' ? `&direction=${order}` : ''}`
-                '/api/ramais'
+                `/api/ramais?local=${selectedLocal}`
             );
             if (!response.ok) {
                 throw new Error(`Erro ao buscar ramais: ${response.status} - ${response.statusText}`);
@@ -64,18 +70,37 @@ export default function Ramais() {
             const data = await response.json();
             setRamais(data.response);
             setCount(data.count);
-
-            setLoading(false);
         } catch (err: any) {
             console.log(err.message);
         } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleLoadLocais = async () => {
+        try {
+            const response = await fetch('/api/locais');
+
+            if (response.ok) {
+                const data = await response.json();
+                setLocais(data.response);
+                setSelectedLocal(data.response[0]);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
             //
         }
-    }, []);
+    };
 
     useEffect(() => {
-        handleReload();
-    }, [handleReload]);
+        if (locais.length > 0)
+            handleReload();
+    }, [locais, selectedLocal]);
+
+    useEffect(() => {
+        handleLoadLocais();
+    }, []);
 
     // Lógica de filtragem
     const dadosFiltrados = ramais.filter(item => {
@@ -234,6 +259,13 @@ export default function Ramais() {
                     <Link href={ `/ramais/cadastrar` } className="justify-self-end text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-semibold rounded-lg text-xs uppercase px-5 py-2.5 focus:outline-none dark:focus:ring-blue-800 transition ease-in-out duration-100">Cadastrar</Link>
                 </div>
                 <div className="flex justify-end w-full mb-2 space-x-4">
+                    <select className="bg-white dark:bg-gray-800 border rounded-lg py-2 px-3 max-h-10 text-sm outline-none focus:border-blue-500" name="local" id="local" value={selectedLocal} onChange={(e) => setSelectedLocal(Number(e.target.value))}>
+                        {
+                            locais.map(item => (
+                                <option value={item.id}>{item.apelido ? item.apelido : item.nome}</option>
+                            ))
+                        }
+                    </select>
                     <input onChange={(e) => handleSearch(e.target.value)} className="bg-white dark:bg-gray-800 border rounded-lg w-1/2 py-2 px-3 max-h-10 text-sm outline-none focus:border-blue-500" type="text" name="search" id="search" placeholder="Informe sua pesquisa aqui..." />
                     <div className="flex space-x-2">
                         <RamaisPDF ref={childRef} isGenerated={estaGerado} />
@@ -383,7 +415,7 @@ export default function Ramais() {
                                 ))
                                 :
                                 <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
-                                    <td className="px-6 py-4 text-center" colSpan={4}>Nenhum Ramal cadastrado!</td>
+                                    <td className="px-6 py-4 text-center" colSpan={5}>Nenhum Ramal cadastrado!</td>
                                 </tr>
                             }
                         </tbody>

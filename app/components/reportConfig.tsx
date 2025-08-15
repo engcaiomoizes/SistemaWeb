@@ -21,8 +21,6 @@ export default function ReportConfig(props: any) {
 
     const handleTipos = async () => {
         try {
-            setLoading(true);
-
             const response = await fetch(`/api/tipos`);
 
             const data = await response.json();
@@ -40,24 +38,22 @@ export default function ReportConfig(props: any) {
         } catch (err) {
             //
         } finally {
-            setLoading(false);
+            //
         }
     };
 
     const handleLocais = async () => {
         try {
-            setLoading(true);
-
             const response = await fetch(`/api/locais`);
 
             const data = await response.json();
 
             if (response.ok) {
                 const locais: Option[] = [];
-                data.response.forEach((tipo: { id: number; nome: string; }) => {
+                data.response.forEach((local: { id: number; nome: string; apelido: string; }) => {
                     locais.push({
-                        value: tipo.id,
-                        label: tipo.nome,
+                        value: local.id,
+                        label: local.apelido ? local.apelido : local.nome,
                     });
                 });
                 setLocais(locais);
@@ -65,13 +61,19 @@ export default function ReportConfig(props: any) {
         } catch (err) {
             //
         } finally {
-            setLoading(false);
+            //
         }
     };
 
     useEffect(() => {
-        handleLocais();
-        handleTipos();
+        const loadData = async () => {
+            setLoading(true);
+            await handleTipos();
+            await handleLocais();
+            setLoading(false);
+        };
+        
+        loadData();
     }, []);
 
     const handleChange = (selected: any) => {
@@ -124,24 +126,29 @@ export default function ReportConfig(props: any) {
         <>
         <div className={`${props.view ? '' : 'hidden'} fixed top-0 left-0 z-50`}>
             <div className="fixed bg-black opacity-40 w-full h-full" onClick={props.fechar}></div>
-            <div className="fixed bg-gray-800 shadow-lg p-10 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg max-h-[640px] min-w-96 w-[520px]">
+            <div className="fixed bg-gray-800 shadow-lg p-10 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg max-h-[640px] min-w-96 w-[520px] flex justify-center">
                 <button className="absolute top-2 right-2" onClick={props.fechar}>
                     <svg className="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                         <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18 17.94 6M18 18 6.06 6"/>
                     </svg>
                 </button>
-                <div className="flex flex-col justify-center items-center space-y-4 text-white">
-                    <MultiSelect msStyle={'w-full text-gray-800'} placeholder="Selecione o tipo..." options={options} selectedOptions={selectedOptions} onChange={handleChange} />
-                    <MultiSelect msStyle={'w-full text-gray-800'} placeholder="Selecione o local..." options={locais} selectedOptions={selectedLocais} onChange={handleChangeLocais} />
-                    <button onClick={handleGerar} className="justify-self-end text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-semibold rounded-lg text-xs uppercase px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                        {
-                            gerando ?
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                            :
-                            'Gerar relatório'
-                        }
-                    </button>
-                </div>
+                {
+                    loading ?
+                    <Loader2 className="h-10 w-10 text-white animate-spin" />
+                    :
+                    <div className="w-full flex flex-col justify-center items-center space-y-4 text-white">
+                        <MultiSelect msStyle={'w-full text-gray-800'} placeholder="Selecione o tipo..." options={options} selectedOptions={selectedOptions} onChange={handleChange} />
+                        <MultiSelect msStyle={'w-full text-gray-800'} placeholder="Selecione o local..." options={locais} selectedOptions={selectedLocais} onChange={handleChangeLocais} />
+                        <button onClick={handleGerar} className="justify-self-end text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-semibold rounded-lg text-xs uppercase px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                            {
+                                gerando ?
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                :
+                                'Gerar relatório'
+                            }
+                        </button>
+                    </div>
+                }
             </div>
         </div>
         </>

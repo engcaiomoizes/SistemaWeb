@@ -18,6 +18,7 @@ from relatorios.folha_ponto import gerar_folhas
 import aiofiles
 
 from relatorios.patrimonios import gerar_relatorio as relatorio_patrimonios
+from relatorios.locais import gerar_relatorio as relatorio_locais
 
 app = FastAPI()
 
@@ -192,6 +193,19 @@ def gerar_relatorio_patrimonios(request: RequestBodyPatrimonios):
     pdf_path = relatorio_patrimonios(dados, os.path.join(UPLOAD_FOLDER, "relatorio_patrimonios.pdf"))
     return FileResponse(pdf_path, filename="relatorio_patrimonios.pdf", media_type="application/pdf")
 
+@app.get("/relatorio-locais")
+def gerar_relatorio_locais():
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT nome, apelido, endereco, telefone_1, email_1, faixa_ip, ativo FROM Locais ORDER BY ativo DESC, nome ASC")
+                dados = cursor.fetchall()
+    except Exception as e:
+        return { "erro": f"Erro ao consultar MySQL: {str(e)}" }
+    
+    pdf_path = relatorio_locais(dados, os.path.join(UPLOAD_FOLDER, "relatorio_locais.pdf"))
+    return FileResponse(pdf_path, filename="relatorio_locais.pdf", media_type="application/pdf")
+
 @app.get("/folha-ramal")
 def folha_ramal():
     try:
@@ -204,14 +218,6 @@ def folha_ramal():
     
     pdf_path = gerar_folha_ramal(dados, os.path.join(UPLOAD_FOLDER, "folha_ramal.pdf"))
     return FileResponse(pdf_path, filename="folha_ramal.pdf", media_type="application/pdf")
-
-dados_funcionarios = {
-    "nome": "CAIO MOIZÉS SANTOS",
-    "matricula": "19120",
-    "cargo": "AUXILIAR DE CPD",
-    "sede": "SMAS",
-    "rg": "55.832.638-9"
-}
 
 class RequestBody(BaseModel):
     ano: int

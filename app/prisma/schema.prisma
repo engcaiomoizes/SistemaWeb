@@ -62,6 +62,7 @@ model Locais {
   transferenciasPara Transferencias[] @relation("Para")
   funcionarios Funcionarios[]
   impressoras Impressoras[]
+  ramais Ramais[]
 }
 
 model Tipos {
@@ -135,11 +136,14 @@ model Sessions {
 /* =============================================================== */
 
 model Ramais {
-  id     String     @id @default(cuid())
-  numero String  @db.VarChar(5)
-  nome   String  @db.VarChar(20)
-  setor  String? @db.VarChar(20)
-  tipo   String  @db.VarChar(10) @default("digital")
+  id      String  @id @default(cuid())
+  localId Int
+  numero  String  @db.VarChar(5)
+  nome    String  @db.VarChar(20)
+  setor   String? @db.VarChar(20)
+  tipo    String  @db.VarChar(10) @default("digital")
+
+  local_fk Locais @relation(fields: [localId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Updates {

@@ -7,49 +7,15 @@ import { authOptions } from "@/lib/authOptions";
 export async function GET(req: NextRequest) {
     try {
         const searchParams = req.nextUrl.searchParams;
-        const page = parseInt(searchParams.get('page') || '1', 10);
-        const limit = parseInt(searchParams.get('limit') || '', 10);
-        const searchTerm = searchParams.get('searchTerm') || '';
-        const order = searchParams.get('orderBy') || '';
-        const direction = searchParams.get('direction') || '';
+        const local = parseInt(searchParams.get('local') || '', 10);
 
-        const skip = (page - 1) * limit;
-
-        const where: any = searchTerm ? {
-            nome: { contains: searchTerm },
+        const where: any = local ? {
+            localId: local,
         } : {};
-
-        let orderBy: any = {};
-
-        if (order != '') {
-            switch (order) {
-                case "nome":
-                    orderBy = direction != '' ? {
-                        nome: direction,
-                    } : {};
-                    break;
-                case "departamento":
-                    orderBy = direction != '' ? {
-                        setor: direction,
-                    } : {};
-                    break;
-                case "numero":
-                    orderBy = direction != '' ? {
-                        numero: direction,
-                    } : {};
-                    break;
-            }
-        }
-
-        // const orderBy: any = order != '' ? {
-        //     nome: order
-        // } : {};
 
         const [ramais, total] = await prisma.$transaction([
             prisma.ramais.findMany({
-                ...(isNaN(limit) ? {} : { take: limit, skip: skip }),
                 where: where,
-                orderBy: orderBy,
             }),
             prisma.ramais.count({ where: where }),
         ]);
@@ -72,6 +38,7 @@ export async function POST(req: Request) {
                 nome: data.nome,
                 setor: data.setor,
                 tipo: data.tipo,
+                localId: data.localId,
             },
         });
 
@@ -133,6 +100,7 @@ export async function PUT(req: Request) {
                 nome: data.nome,
                 setor: data.setor,
                 tipo: data.tipo,
+                localId: data.localId,
             }
         });
 

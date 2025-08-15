@@ -2,8 +2,6 @@
 
 import LoadingSpinner from "@/components/loading/loadingSpinner";
 import LocaisView from "@/components/views/locaisView";
-import LocaisPDF from "@/components/pdf/locais";
-import { PDFRef } from "@/lib/extras";
 import Link from "next/link";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import Alert from "@/components/alert";
@@ -45,7 +43,6 @@ export default function Locais() {
     const [order, setOrder] = useState('');
 
     // Relatórios
-    const childRef = useRef<PDFRef>(null);
     const [gerando, setGerando] = useState(false);
 
     useEffect(() => {
@@ -173,13 +170,30 @@ export default function Locais() {
         }
     };
 
-    const gerarListagem = () => {
-        setGerando(true);
-        childRef.current?.gerarListagem();
-    };
+    const gerarListagem = async () => {
+        try {
+            setGerando(true);
 
-    const estaGerado = () => {
-        setGerando(false);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/relatorio-locais`);
+
+            if (!response.ok) {
+                throw new Error("Ocorreu um erro inesperado no MySQL.");
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setGerando(false);
+        }
     };
 
     const [dados, setDados] = useState<Local>();
@@ -203,12 +217,6 @@ export default function Locais() {
                 <div className="flex justify-end w-full mb-2 space-x-4">
                     <input onChange={(e) => handleSearch(e.target.value)} className="bg-white dark:bg-gray-800 border rounded-lg w-1/2 py-2 px-3 max-h-10 text-sm outline-none focus:border-blue-500" type="text" name="search" id="search" placeholder="Informe sua pesquisa aqui..." />
                     <div className="flex space-x-2">
-                        <LocaisPDF ref={childRef} isGenerated={estaGerado} />
-                        <button className="cursor-pointer border px-1.5 rounded-lg border-blue-700 bg-blue-700 hover:bg-blue-800 hover:border-blue-800 transition ease-in-out duration-100">
-                            <svg className="w-6 h-6 text-white dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                                <path fill-rule="evenodd" d="M9 7V2.221a2 2 0 0 0-.5.365L4.586 6.5a2 2 0 0 0-.365.5H9Zm2 0V2h7a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9h5a2 2 0 0 0 2-2Zm2-2a1 1 0 1 0 0 2h3a1 1 0 1 0 0-2h-3Zm0 3a1 1 0 1 0 0 2h3a1 1 0 1 0 0-2h-3Zm-6 4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-6Zm8 1v1h-2v-1h2Zm0 3h-2v1h2v-1Zm-4-3v1H9v-1h2Zm0 3H9v1h2v-1Z" clip-rule="evenodd"/>
-                            </svg>
-                        </button>
                         {
                             gerando ?
                             <div role="status" className="flex justify-center">
