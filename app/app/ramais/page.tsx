@@ -222,9 +222,10 @@ export default function Ramais() {
         try {
             setGerandoFolha(true);
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/folha-ramal`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/folha-ramal?local=${selectedLocal}`);
 
             if (!response.ok) {
+                console.log(response.statusText);
                 throw new Error("Erro ao gerar a Folha de Ramal.");
             }
 
@@ -262,7 +263,7 @@ export default function Ramais() {
                     <select className="bg-white dark:bg-gray-800 border rounded-lg py-2 px-3 max-h-10 text-sm outline-none focus:border-blue-500" name="local" id="local" value={selectedLocal} onChange={(e) => setSelectedLocal(Number(e.target.value))}>
                         {
                             locais.map(item => (
-                                <option value={item.id}>{item.apelido ? item.apelido : item.nome}</option>
+                                <option key={item.id} value={item.id}>{item.apelido ? item.apelido : item.nome}</option>
                             ))
                         }
                     </select>

@@ -586,7 +586,7 @@ export default function Patrimonios() {
                                 ))
                                 :
                                 <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
-                                    <td className="px-6 py-4 text-center" colSpan={7}>Nenhum Patrimônio cadastrado!</td>
+                                    <td className="px-6 py-4 text-center" colSpan={8}>Nenhum Patrimônio cadastrado!</td>
                                 </tr>
                             }
                         </tbody>

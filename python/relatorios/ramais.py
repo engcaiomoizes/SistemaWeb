@@ -8,41 +8,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
-def gerar_relatorio_pdf(dados, UPLOAD_FOLDER):
-    nome_arquivo = os.path.join(UPLOAD_FOLDER, "relatorio_produtos.pdf")
-    c = canvas.Canvas(nome_arquivo, pagesize=A4)
-    largura, altura = A4
-
-    # Cabeçalho
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(2 * cm, altura - 2 * cm, "Relatório de Usuários")
-
-    c.setFont("Helvetica", 10)
-    c.drawString(2 * cm, altura - 2.7 * cm, f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
-
-    # Tabela
-    y = altura - 4 * cm
-    c.setFont("Helvetica-Bold", 10)
-    c.drawString(2 * cm, y, "Nome")
-    c.drawString(11 * cm, y, "Login")
-    c.drawString(15 * cm, y, "Cargo")
-
-    c.setFont("Helvetica", 10)
-    y -= 0.7 * cm
-
-    for item in dados:
-        if y < 2 * cm:
-            c.showPage()
-            y = altura - 2 * cm
-        c.drawString(2 * cm, y, str(item["nome"]))
-        c.drawString(11 * cm, y, str(item["login"]))
-        c.drawString(15 * cm, y, str(item["cargo"]))
-        y -= 0.6 * cm
-    
-    c.save()
-    return nome_arquivo
-
-def gerar_pdf_com_tabela(dados, caminho_saida):
+def gerar_pdf_com_tabela(local, dados, caminho_saida):
     doc = SimpleDocTemplate(caminho_saida, pagesize=A4, leftMargin=1.5 * cm, rightMargin=1.5 * cm, topMargin=1.5 * cm, bottomMargin=1.5 * cm)
     elementos = []
     estilos = getSampleStyleSheet()
@@ -60,10 +26,10 @@ def gerar_pdf_com_tabela(dados, caminho_saida):
     )
 
     # Cabeçalho + dados
-    titulo = Paragraph("SECRETARIA DE ASSISTÊNCIA SOCIAL - (18) 3636-1260", estilo_titulo)
+    titulo = Paragraph(f"{str(local['nome']).upper()} - {str(local['telefone_1'])}", estilo_titulo)
     # subtitulo = Paragraph("RUA BANDEIRANTES, 111, CENTRO - CEP: 16010-090", estilo_titulo)
     rodape1 = Paragraph("TRANSFERÊNCIA DE RAMAL: *2 + RAMAL", estilo_titulo)
-    rodape2 = Paragraph("RETORNO DE LIGAÇÃO: ** + RAMAL", estilo_titulo)
+    rodape2 = Paragraph("RETORNO DE LIGAÇÃO: *07 + RAMAL", estilo_titulo)
     dados_tabela = [
         [titulo],
         # [subtitulo],

@@ -38,7 +38,7 @@ export async function POST(req: Request) {
                 nome: data.nome,
                 setor: data.setor,
                 tipo: data.tipo,
-                localId: data.localId,
+                localId: Number(data.localId),
             },
         });
 
@@ -100,7 +100,7 @@ export async function PUT(req: Request) {
                 nome: data.nome,
                 setor: data.setor,
                 tipo: data.tipo,
-                localId: data.localId,
+                localId: Number(data.localId),
             }
         });
 

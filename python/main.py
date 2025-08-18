@@ -207,16 +207,18 @@ def gerar_relatorio_locais():
     return FileResponse(pdf_path, filename="relatorio_locais.pdf", media_type="application/pdf")
 
 @app.get("/folha-ramal")
-def folha_ramal():
+def folha_ramal(local: int):
     try:
         with get_connection() as conn:
             with conn.cursor() as cursor:
-                cursor.execute('SELECT numero, nome, setor FROM Ramais ORDER BY nome = "Expediente" DESC, setor LIKE "%Secretária%" DESC, setor LIKE "%Gabinete%" DESC, setor LIKE "%Assessor" DESC, setor LIKE "%Ouvidoria%" DESC, setor LIKE "%Gestão%" DESC, setor LIKE "%RH%" DESC, setor LIKE "%SUAS%" DESC, setor LIKE "%Pol. Públicas%" DESC, setor LIKE "%COMAS%" DESC, setor LIKE "%P. Especial%" DESC, setor LIKE "%P. Básica%" DESC, setor LIKE "%Cad. Único%" DESC, setor LIKE "%Viva Leite%" DESC, setor LIKE "%TI%" DESC, numero ASC')
+                cursor.execute('SELECT nome, apelido, telefone_1 FROM Locais WHERE id = %s', local)
+                local_info = cursor.fetchone()
+                cursor.execute(f'SELECT numero, nome, setor FROM Ramais WHERE localId = {local} ORDER BY nome = "Expediente" DESC, setor LIKE "%Secretária%" DESC, setor LIKE "%Gabinete%" DESC, setor LIKE "%Assessor" DESC, setor LIKE "%Ouvidoria%" DESC, setor LIKE "%Gestão%" DESC, setor LIKE "%RH%" DESC, setor LIKE "%SUAS%" DESC, setor LIKE "%Pol. Públicas%" DESC, setor LIKE "%COMAS%" DESC, setor LIKE "%P. Especial%" DESC, setor LIKE "%P. Básica%" DESC, setor LIKE "%Cad. Único%" DESC, setor LIKE "%Viva Leite%" DESC, setor LIKE "%TI%" DESC, numero ASC')
                 dados = cursor.fetchall()
     except Exception as e:
         return { "erro": f"Erro ao consultar MySQL: {str(e)}" }
     
-    pdf_path = gerar_folha_ramal(dados, os.path.join(UPLOAD_FOLDER, "folha_ramal.pdf"))
+    pdf_path = gerar_folha_ramal(local_info, dados, os.path.join(UPLOAD_FOLDER, "folha_ramal.pdf"))
     return FileResponse(pdf_path, filename="folha_ramal.pdf", media_type="application/pdf")
 
 class RequestBody(BaseModel):
