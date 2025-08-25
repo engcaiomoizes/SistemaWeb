@@ -10,3 +10,4 @@ PyMuPDF
 dotenv
 cairosvg
 svglib
+beautifulsoup4

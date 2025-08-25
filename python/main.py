@@ -20,6 +20,8 @@ import aiofiles
 from relatorios.patrimonios import gerar_relatorio as relatorio_patrimonios
 from relatorios.locais import gerar_relatorio as relatorio_locais
 
+from relatorios.laudo_tecnico import gerar_laudo as laudo_tecnico
+
 app = FastAPI()
 
 # Permitir requisições do frontend (ajuste para segurança depois)
@@ -247,6 +249,31 @@ def folhas_ponto(request: RequestBody):
     
     pdf_path = gerar_folhas(ano=ano, mes=mes, dados=dados, holidays=feriados, dias_abertos=dias_abertos, caminho_saida=os.path.join(UPLOAD_FOLDER, f"FOLHAS - {mes:02d}-{ano}.pdf"))
     return FileResponse(pdf_path, filename=f"FOLHAS - {mes:02d}-{ano}.pdf", media_type="application/pdf")
+
+# ============================= GERAR LAUDO TÉCNICO P/ BAIXA ======================================
+class Item(BaseModel):
+    descricao: str
+    patrimonio: str
+
+class LaudoRequestBody(BaseModel):
+    itens: list[Item]
+    texto: str
+
+@app.post("/laudo-tecnico")
+def gerar_laudo(request: LaudoRequestBody):
+    dados = request.itens
+    texto = request.texto
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(f"SELECT t.nome, p.descricao, p.num_patrimonio, p.orgao_patrimonio FROM Itens i INNER JOIN Patrimonios p ON p.id = i.patrimonioId INNER JOIN Tipos t ON t.id = p.tipo WHERE i.baixaId = '{id}'")
+                dados = cursor.fetchall()
+    except Exception as e:
+        return { "erro": f"Erro ao consultar MySQL: {str(e)}" }
+    
+    pdf_path = laudo_tecnico(dados=dados, texto=texto, caminho_saida=os.path.join(UPLOAD_FOLDER, "laudo_tecnico.pdf"))
+    return FileResponse(pdf_path, filename="laudo_tecnico.pdf", media_type="application/pdf")
 
 @app.post("/svg-to-png")
 def svg_to_png(caminho_svg, caminho_png):

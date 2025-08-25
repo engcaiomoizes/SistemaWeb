@@ -1,6 +1,7 @@
 import { Patrimonio } from "@/types/patrimonio";
 import { useState } from "react";
 import Alert from "../alert";
+import FormLaudo from "./formLaudo";
 
 interface Props {
     itens: Patrimonio[];
@@ -56,15 +57,64 @@ export default function Baixa({
         }
     };
 
+    // LAUDO TÉCNICO
+    const [laudoIsOpen, setLaudoIsOpen] = useState(false);
+    const handleCloseLaudo = () => {
+        setLaudoIsOpen(false);
+    };
+
+    const handleSave = async (texto: string) => {
+        const formattedItens = itens.map(item => ({
+            descricao: item.tipo_fk.nome + " " + item.descricao,
+            patrimonio: item.num_patrimonio + " " + item.orgao_patrimonio
+        }));
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/laudo-tecnico`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    itens: formattedItens,
+                    texto,
+                }),
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.target = '_blank';
+
+                document.body.appendChild(a);
+                a.click();
+
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } else {
+                console.error('Erro ao gerar PDF: ', response.status);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            //
+        }
+    };
+
+    if (!isOpen || itens.length == 0) return null;
+
     return (
         <>
-        {
-            (isOpen && itens.length > 0) &&
-            <div className="absolute top-0 left-0">
+        <div className="absolute top-0 left-0">
             <div className="fixed top-0 left-0 z-20">
                 <div className="fixed top-0 left-0 bg-black opacity-40 w-full h-full" onClick={close}></div>
                 <Alert type={alertType} onClose={handleClose} className="left-20">{message}</Alert>
                 <div className="fixed bg-white dark:bg-gray-800 px-6 pt-4 pb-6 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg max-h-[640px] min-w-96 shadow-lg">
+                {
+                    !laudoIsOpen ?
                     <div className="flex flex-col justify-center relative">
                         <span className="uppercase font-bold text-center text-lg">Baixa Patrimonial</span>
                         <div className="flex flex-col my-2">
@@ -74,15 +124,18 @@ export default function Baixa({
                                     <span key={index} className="text-sm">{item.tipo_fk.nome} {item.descricao} | {item.num_patrimonio} {item.orgao_patrimonio}<br></br></span>
                                 ))
                             }
+                            <a role="button" onClick={() => setLaudoIsOpen(true)} className="cursor-pointer mt-1 text-sm font-medium text-blue-600 hover:underline">Criar Laudo Técnico</a>
                         </div>
                         <input type="text" name="memorando" id="memorando" value={memorando} onChange={(e) => setMemorando(e.target.value)} className="border-b outline-none p-1.5 focus:border-teal-500 transition ease-in-out duration-100" placeholder="Memorando/Proc. Administrativo" />
                         <input type="text" name="observacoes" id="observacoes" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} className="border-b outline-none p-1.5 focus:border-teal-500 transition ease-in-out duration-100" placeholder="Observações" />
                         <button onClick={handleRegistrar} className="cursor-pointer border border-gray-800 mt-3 py-1.5 rounded bg-gray-800 text-white uppercase text-sm font-medium hover:bg-gray-900 hover:border-gray-900 transition ease-in-out duration-300">Registrar Baixa</button>
                     </div>
+                    :
+                    <FormLaudo isOpen={laudoIsOpen} onClose={handleCloseLaudo} itens={itens} onSave={handleSave} />
+                }
                 </div>
             </div>
         </div>
-        }
         </>
     );
 }
