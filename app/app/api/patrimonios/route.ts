@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-
 import prisma from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { getCurrentDate } from "@/lib/string";
+
+function saveLaudo() {
+    try {
+        //
+    } catch (err) {
+        console.error(err);
+    }
+}
 
 export async function GET(req: NextRequest) {
     try {

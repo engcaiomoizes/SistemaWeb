@@ -2,7 +2,7 @@ import { Patrimonio } from "./patrimonio";
 
 export interface Baixa {
     id: string;
-    laudoId?: string;
+    laudo?: string;
     memorando?: string;
     observacoes?: string;
     created_at: Date;

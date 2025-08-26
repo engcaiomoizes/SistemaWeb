@@ -20,6 +20,7 @@ import SelectedsCounter from "@/components/selectedsCounter";
 import { FaSearch } from "react-icons/fa";
 import { LuDownload } from "react-icons/lu";
 import Baixas from "@/components/views/baixas";
+import { FaCopy } from "react-icons/fa6";
 
 interface Patrimonio {
     id: string;
@@ -343,32 +344,6 @@ export default function Patrimonios() {
         setCurrentPage(1);
     };
 
-    const handleExcel = async () => {
-        try {
-            const response = await fetch(`/api/patrimonios/relatorio?tipo=excel`);
-
-            if (response.ok) {
-                const blob = await response.blob();
-
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'relatorio-patrimonios.xlsx';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-
-                setMessage('Relatório gerado com sucesso!');
-                setAlertType('success');
-            } else {
-                //
-            }
-        } catch (err) {
-            //
-        }
-    };
-
     const [pdf, setPdf] = useState(false);
 
     const handlePdf = () => {
@@ -389,6 +364,21 @@ export default function Patrimonios() {
         setMessage("Transferência efetuada com sucesso!");
         setAlertType("success");
         handleReload();
+    };
+
+    // COPIAR PATRIMÔNIO
+    const handleCopiar = (item: Patrimonio) => {
+        const dataToSend = {
+            tipo: item.tipo,
+            descricao: item.descricao,
+            orgao_patrimonio: item.orgao_patrimonio,
+            local: item.local,
+        };
+
+        const jsonString = JSON.stringify(dataToSend);
+        const base64String = btoa(jsonString);
+
+        window.location.href = `/patrimonios/cadastrar?data=${base64String}`;
     };
 
     if (loading) return <LoadingSpinner />;
@@ -554,6 +544,10 @@ export default function Patrimonios() {
                                                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m16 10 3-3m0 0-3-3m3 3H5v3m3 4-3 3m0 0 3 3m-3-3h14v-3"/>
                                                         </svg>
                                                         Transferir
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleCopiar(item)} style={{ "cursor": "pointer" }}>
+                                                        <FaCopy />
+                                                        Copiar
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => window.location.href = `/patrimonios/editar/${item.id}`} style={{ "cursor": "pointer" }}>
                                                         <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">

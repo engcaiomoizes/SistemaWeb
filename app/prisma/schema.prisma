@@ -39,7 +39,7 @@ model Usuarios {
   nivel_fk Niveis? @relation(fields: [nivel], references: [id])
   sessions Sessions[]
   logs Logs[]
-  laudos Laudos[]
+  // laudos Laudos[]
   // modelos Modelos[]
   // comentarios Comentarios[]
 
@@ -249,27 +249,27 @@ model Impressoras {
 //   @@index([patrimonioId], map: "Baixas_patrimonio_fkey")
 // }
 
-model Laudos {
-  id String @id @default(cuid())
-  texto String @db.Text
-  autorId String?
-  created_at DateTime @default(now())
-  updated_at DateTime?
+// model Laudos {
+//   id String @id @default(cuid())
+//   texto String @db.Text
+//   autorId String?
+//   created_at DateTime @default(now())
+//   updated_at DateTime?
 
-  baixas Baixas[]
+//   baixas Baixas[]
 
-  autor_fk Usuarios? @relation(fields: [autorId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-}
+//   autor_fk Usuarios? @relation(fields: [autorId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+// }
 
 model Baixas {
   id String @id @default(cuid())
-  laudoId String?
+  laudo String?
   memorando String?
   observacoes String?
   created_at DateTime @default(now())
   updated_at DateTime?
 
-  laudo_fk Laudos? @relation(fields: [laudoId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  // laudo_fk Laudos? @relation(fields: [laudoId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   itens Itens[]
 }

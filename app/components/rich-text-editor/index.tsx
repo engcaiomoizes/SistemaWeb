@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -35,7 +35,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
                 // limit: 240,
             }),
         ],
-        content: content,
+        content: '',
         editorProps: {
             attributes: {
                 class: "min-h-[220px] border rounded-md bg-slate-50 dark:bg-gray-800 py-2 px-3"
@@ -44,7 +44,16 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         onUpdate: ({ editor }) => {
             onChange(editor.getHTML());
         },
-    })
+    });
+
+    useEffect(() => {
+        if (!editor) return;
+
+        const currentContent = editor.getHTML();
+        if (content !== currentContent) {
+            editor.commands.setContent(content);
+        }
+    }, [content, editor]);
     
     return (
         <div>

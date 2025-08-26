@@ -28,6 +28,7 @@ def gerar_laudo(dados, texto, caminho_saida):
         name="Title",
         fontName="Helvetica-Bold",
         fontSize=12,
+        leading=18,
         alignment=1
     )
 
@@ -80,21 +81,23 @@ def gerar_laudo(dados, texto, caminho_saida):
 
     dados_tabela = [
         ["", "Descrição", "Nº Patrimônio"],
-        *[["", d["descricao"], d["patrimonio"]] for d in dados]
+        *[[f"Item {i + 1}", d.descricao, d.patrimonio ] for i, d in enumerate(dados)]
     ]
 
     # Tabela
-    tabela = Table(dados_tabela, colWidths=[2 * cm, 9 * cm, 5 * cm])
+    tabela = Table(dados_tabela, colWidths=[2 * cm, 10 * cm, 5 * cm])
     tabela.setStyle(TableStyle([
-        ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
+        # ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
         ("TEXTCOLOR", (0,0), (-1,0), colors.black),
         ("ALIGN", (0,0), (-1,-1), "LEFT"),
         ("GRID", (0,0), (-1,-1), 0.5, colors.grey),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 12),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
         ("TOPPADDING", (0, 0), (-1, 0), 2),
         ("VALIGN", (0,0), (-1, -1), "MIDDLE"),
+        ("ALIGN", (0,0), (0, -1), "CENTER"),
         # ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke),
     ]))
 

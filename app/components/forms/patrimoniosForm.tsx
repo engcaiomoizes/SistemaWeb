@@ -44,10 +44,13 @@ interface Local {
     ativo: boolean;
 }
 
-export default function PatrimoniosForm(props: any) {
-    const { push } = useRouter();
+interface Props {
+    id?: number;
+    item?: any;
+}
 
-    const [loadingTemp, setLoadingTemp] = useState<boolean>(true);
+export default function PatrimoniosForm({ id, item }: Props) {
+    const { push } = useRouter();
 
     const [formData, setFormData] = useState<FormValues>({
         tipo: 1,
@@ -88,8 +91,7 @@ export default function PatrimoniosForm(props: any) {
 
     const [tipos, setTipos] = useState<Tipo[]>([]);
     const [locais, setLocais] = useState<Local[]>([]);
-
-    const loading = (!(tipos.length > 0 && locais.length > 0) && !props.id) || (!(tipos.length > 0 && locais.length > 0) && props.id && loadingTemp);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchTipos = async () => {
@@ -123,10 +125,26 @@ export default function PatrimoniosForm(props: any) {
             }
         };
 
-        fetchTipos();
-        fetchLocais();
+        const loadData = async () => {
+            setLoading(true);
+            await fetchTipos();
+            await fetchLocais();
+            setLoading(false);
 
-        if (props.id)
+            if (item) {
+                setFormData({
+                    ...formData,
+                    tipo: item.tipo,
+                    descricao: item.descricao,
+                    orgao_patrimonio: item.orgao_patrimonio,
+                    local: item.local,
+                });
+            }
+        };
+
+        loadData();
+
+        if (id)
             handleLoad();
     }, []);
 
@@ -135,12 +153,12 @@ export default function PatrimoniosForm(props: any) {
 
         try {
             const response = await fetch('/api/patrimonios', {
-                method: props.id ? 'PUT' : 'POST',
+                method: id ? 'PUT' : 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    id: props.id,
+                    id: id,
                     ...formData
                 }),
             });
@@ -165,7 +183,7 @@ export default function PatrimoniosForm(props: any) {
 
     const handleLoad = async () => {
         try {
-            const response = await fetch(`/api/patrimonios/${props.id}`);
+            const response = await fetch(`/api/patrimonios/${id}`);
 
             if (!response.ok) {
                 throw new Error(`Erro ao buscar patrimônio: ${response.status} - ${response.statusText}`);
@@ -200,7 +218,7 @@ export default function PatrimoniosForm(props: any) {
         } catch (err) {
             console.log(err);
         } finally {
-            setLoadingTemp(false);
+            //
         }
     };
 
@@ -295,7 +313,7 @@ export default function PatrimoniosForm(props: any) {
                     <div className="mb-5">
                         <label htmlFor="local" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Local</label>
                         {
-                            props.id ?
+                            id ?
                             <span>{local}</span>
                             :
                             <select name="local" id="local" value={formData.local} onChange={handleChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
@@ -325,7 +343,7 @@ export default function PatrimoniosForm(props: any) {
                             </label>
                         </div>
                     }
-                    <button type="submit" className="cursor-pointer text-white bg-blue-600 hover:bg-blue-700 focus:outline-none font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">{ props.id ? 'Atualizar' : 'Cadastrar' }</button>
+                    <button type="submit" className="cursor-pointer text-white bg-blue-600 hover:bg-blue-700 focus:outline-none font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">{ id ? 'Atualizar' : 'Cadastrar' }</button>
                 </form>
                 <div className="p-2 max-w-xl mx-auto mt-6 flex flex-col">
                     {

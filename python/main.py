@@ -38,11 +38,15 @@ OUTPUT_FOLDER = os.path.join(UPLOAD_FOLDER, "output")
 
 TEMP_DIR = os.path.join(UPLOAD_FOLDER, "temp")
 
-app.mount("/static", StaticFiles(directory=TEMP_DIR), name="static")
+LAUDOS_DIR = os.path.join(UPLOAD_FOLDER, "laudos")
+
+# app.mount("/temp", StaticFiles(directory=TEMP_DIR), name="temp")
+app.mount("/static", StaticFiles(directory=UPLOAD_FOLDER), name="static")
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 os.makedirs(TEMP_DIR, exist_ok=True)
+os.makedirs(LAUDOS_DIR, exist_ok=True)
 
 # --- Rota 1: Juntar PDFs ---
 @app.post("/merge-pdf")
@@ -263,17 +267,58 @@ class LaudoRequestBody(BaseModel):
 def gerar_laudo(request: LaudoRequestBody):
     dados = request.itens
     texto = request.texto
-
-    try:
-        with get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(f"SELECT t.nome, p.descricao, p.num_patrimonio, p.orgao_patrimonio FROM Itens i INNER JOIN Patrimonios p ON p.id = i.patrimonioId INNER JOIN Tipos t ON t.id = p.tipo WHERE i.baixaId = '{id}'")
-                dados = cursor.fetchall()
-    except Exception as e:
-        return { "erro": f"Erro ao consultar MySQL: {str(e)}" }
     
     pdf_path = laudo_tecnico(dados=dados, texto=texto, caminho_saida=os.path.join(UPLOAD_FOLDER, "laudo_tecnico.pdf"))
-    return FileResponse(pdf_path, filename="laudo_tecnico.pdf", media_type="application/pdf")
+    
+    temp_pdf_path = armazenar_temporariamente(pdf_path)
+
+    print(temp_pdf_path)
+    return temp_pdf_path
+
+    # return FileResponse(temp_pdf_path, filename="laudo_tecnico.pdf", media_type="application/pdf")
+
+def armazenar_temporariamente(file_path: str) -> str:
+    try:
+        file_id = f"{uuid.uuid4()}.pdf"
+        temp_path = os.path.join(TEMP_DIR, file_id)
+        os.makedirs(TEMP_DIR, exist_ok=True)
+
+        shutil.copyfile(file_path, temp_path)
+        return file_id
+    except Exception as e:
+        raise RuntimeError(f"Ocorreu um erro: {e}")
+
+class SaveFileBody(BaseModel):
+    temp_filename: str
+
+@app.post("/save-file")
+def salvar_arquivo(request: SaveFileBody):
+    temp_filename = request.temp_filename
+
+    try:
+        os.makedirs(LAUDOS_DIR, exist_ok=True)
+        final_path = os.path.join(LAUDOS_DIR, temp_filename)
+        shutil.copyfile(os.path.join(TEMP_DIR, temp_filename), final_path)
+        if os.path.exists(os.path.join(TEMP_DIR, temp_filename)):
+            os.remove(os.path.join(TEMP_DIR, temp_filename))
+        return True
+    except Exception as e:
+        print(e)
+        return False
+
+@app.post("/remove-temp-file")
+def remover_arquivo_temporario(request: SaveFileBody):
+    temp_filename = request.temp_filename
+    
+    try:
+        file_path = os.path.join(TEMP_DIR, temp_filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        return True
+    except Exception as e:
+        print(e)
+        return False
+# =================================================================================
 
 @app.post("/svg-to-png")
 def svg_to_png(caminho_svg, caminho_png):

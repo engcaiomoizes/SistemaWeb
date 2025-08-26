@@ -76,10 +76,14 @@ export default function Baixas({ isOpen, onClose }: Props) {
                             {
                                 baixaSelecionada.length > 0 &&
                                 <div className="w-full flex flex-col mt-3">
-                                    <span className="font-medium text-lg">{baixaSelecionada[0].memorando}</span>
-                                    <span className="">Data: {buildStringDate(baixaSelecionada[0].created_at)}</span>
+                                    <span className="font-medium text-xl mb-1">{baixaSelecionada[0].memorando}</span>
+                                    <span className=""><b>Data:</b> {buildStringDate(baixaSelecionada[0].created_at)}</span>
+                                    {
+                                        baixaSelecionada[0].observacoes &&
+                                        <span className="text-sm"><b>Obs.:</b> {baixaSelecionada[0].observacoes}</span>
+                                    }
                                     <div className="flex flex-col">
-                                        <span className="font-medium">Itens:</span>
+                                        <span className="font-bold">Itens:</span>
                                         {
                                             baixaSelecionada[0].itens.length > 0 &&
                                             baixaSelecionada[0].itens.map((item, index) => (
@@ -87,6 +91,12 @@ export default function Baixas({ isOpen, onClose }: Props) {
                                             ))
                                         }
                                     </div>
+                                    {
+                                        baixaSelecionada[0].laudo &&
+                                        <div className="flex">
+                                            <a href={`${process.env.NEXT_PUBLIC_PYTHON_API_URL}/static/laudos/${baixaSelecionada[0].laudo}`} target="_blank" className="text-blue-600 font-medium hover:underline">Visualizar Laudo Técnico</a>
+                                        </div>
+                                    }
                                 </div>
                             }
                         </div>

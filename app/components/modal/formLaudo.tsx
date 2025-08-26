@@ -1,17 +1,18 @@
 import { Patrimonio } from "@/types/patrimonio";
 import { FaChevronLeft } from "react-icons/fa";
 import RichTextEditor from "../rich-text-editor";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
-    itens: Patrimonio[];
+    // itens: Patrimonio[];
+    content?: string;
     isOpen: boolean;
     onClose: () => void;
     onSave: (texto: string) => void;
 }
 
 export default function FormLaudo({
-    itens,
+    content,
     isOpen,
     onClose,
     onSave
@@ -22,9 +23,15 @@ export default function FormLaudo({
     }
 
     const handleCancelar = () => {
-        setTexto("");
+        // setTexto("");
         onClose();
     };
+
+    useEffect(() => {
+        if (content) {
+            setTexto(content);
+        }
+    }, [content]);
 
     if (!isOpen) return null;
 
