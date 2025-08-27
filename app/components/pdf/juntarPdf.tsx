@@ -53,11 +53,11 @@ export default function JuntarPDF() {
     };
 
     return (
-        <div className="flex flex-col items-center py-4 px-4 bg-white shadow rounded gap-2">
+        <div className="flex flex-col items-center py-4 px-4 bg-white shadow rounded gap-2 dark:bg-gray-800">
             <span className="font-bold text-2xl mb-2">Juntar PDF</span>
             <input type="file" accept="application/pdf" multiple ref={inputRef} onChange={(e) => setFiles(e.target.files)} name="arquivo" id="arquivo" className="hidden" />
-            <Button className="cursor-pointer" onClick={() => inputRef.current?.click()}>{(files && files.length > 0) ? `${files.length} arquivos` : 'Selecionar arquivos'}</Button>
-            <Button className="w-full cursor-pointer" onClick={handleJuntar} disabled={loading || (!files || files.length < 2)}>{loading ? 'Processando...' : 'Juntar PDF'}</Button>
+            <Button className="cursor-pointer bg-accent-foreground text-accent" onClick={() => inputRef.current?.click()}>{(files && files.length > 0) ? `${files.length} arquivos` : 'Selecionar arquivos'}</Button>
+            <Button className="w-full cursor-pointer bg-accent-foreground text-accent" onClick={handleJuntar} disabled={loading || (!files || files.length < 2)}>{loading ? 'Processando...' : 'Juntar PDF'}</Button>
         </div>
     );
 }

@@ -64,6 +64,6 @@ export default withAuth(middleware, callbackOptions)
 export const config = {
   //matcher: '/contas'
   matcher: [
-    '/((?!login|cadastrar|api/auth/[...nextauth]|api/cadastrar|static|_next/static|_next/image).*)'
+    '/((?!login|cadastrar|ramal|api/auth/[...nextauth]|api/cadastrar|static|_next/static|_next/image).*)'
   ],
 }

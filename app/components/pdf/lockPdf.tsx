@@ -60,12 +60,12 @@ export default function LockPDF() {
     };
 
     return (
-        <div className="flex flex-col items-center py-4 px-4 bg-white shadow rounded gap-2">
+        <div className="flex flex-col items-center py-4 px-4 bg-white shadow rounded gap-2 dark:bg-gray-800">
             <span className="font-bold text-2xl mb-2">Proteger PDF</span>
             <input type="file" ref={inputRef} onChange={handleFileChange} name="arquivo" id="arquivo" className="hidden" />
-            <Button className="cursor-pointer" onClick={() => inputRef.current?.click()}>{selectedFile ? inputRef.current?.files![0].name : 'Selecionar arquivo'}</Button>
+            <Button className="cursor-pointer bg-accent-foreground text-accent" onClick={() => inputRef.current?.click()}>{selectedFile ? inputRef.current?.files![0].name : 'Selecionar arquivo'}</Button>
             <input type="text" name="senha" id="senha" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Senha para o arquivo PDF" className="w-full border-b-2 focus:border-teal-500 py-1.5 px-3 outline-none" />
-            <Button className="w-full cursor-pointer" onClick={handleLock} disabled={loading || !selectedFile}>{loading ? 'Processando...' : 'Proteger PDF'}</Button>
+            <Button className="w-full cursor-pointer bg-accent-foreground text-accent" onClick={handleLock} disabled={loading || !selectedFile}>{loading ? 'Processando...' : 'Proteger PDF'}</Button>
         </div>
     );
 }

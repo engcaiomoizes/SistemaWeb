@@ -6,17 +6,16 @@ import ThemeSwitcher from "./theme-switcher";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { FaFilePdf } from "react-icons/fa6";
+import MenuSwitcher from "./menu-switcher";
 
 export default function SideMenu() {
     const [fullMenu, setFullMenu] = useState(false);
     
     const pathname = usePathname();
 
-    const excludeRoutes = ['/login', '/cadastrar', '/teste', '/maintenance'];
+    const excludeRoutes = ['/login', '/cadastrar', '/ramal', '/teste', '/maintenance'];
 
     const showMenu = !excludeRoutes.includes(pathname);
-
-    const { push } = useRouter();
 
     const { data: session, status } = useSession();
 
@@ -251,8 +250,13 @@ export default function SideMenu() {
                                 <span className={`${fullMenu ? '' : 'hidden'} font-light px-2 font-medium`}>Logout</span>
                             </div>
                         </button>
-                        <div className="flex w-16 py-4 justify-center">
-                            <ThemeSwitcher />
+                        <div className="flex w-72 py-4 justify-start">
+                            <div className="w-16 flex justify-center items-center">
+                                <ThemeSwitcher />
+                            </div>
+                            <div className="flex justify-center items-center">
+                                <MenuSwitcher />
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -19,9 +19,9 @@ export default function PDF() {
             <div className="max-w-4xl xl:container">
                 <div className="flex flex-col gap-6">
                     <SepararPDF />
-                    <JuntarPDF />
+                    {/* <JuntarPDF /> */}
                     <LockPDF />
-                    <PdfUpload onUploadSuccess={handleUploadResponse} />
+                    {/* <PdfUpload onUploadSuccess={handleUploadResponse} />
                     {
                         uploadResponse && (
                             <div>
@@ -29,7 +29,7 @@ export default function PDF() {
                                 <pre>{JSON.stringify(uploadResponse, null, 2)}</pre>
                             </div>
                         )
-                    }
+                    } */}
                 </div>
             </div>
         </div>
