@@ -92,6 +92,7 @@ export default function PatrimoniosForm({ id, item }: Props) {
     const [tipos, setTipos] = useState<Tipo[]>([]);
     const [locais, setLocais] = useState<Local[]>([]);
     const [loading, setLoading] = useState(true);
+    const [message, setMessage] = useState("");
 
     useEffect(() => {
         const fetchTipos = async () => {
@@ -150,6 +151,11 @@ export default function PatrimoniosForm({ id, item }: Props) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!formData.num_patrimonio || formData.num_patrimonio <= 0) {
+            setMessage("Preencha o número do patrimônio.");
+            return;
+        }
 
         try {
             const response = await fetch('/api/patrimonios', {
@@ -346,6 +352,7 @@ export default function PatrimoniosForm({ id, item }: Props) {
                     <button type="submit" className="cursor-pointer text-white bg-blue-600 hover:bg-blue-700 focus:outline-none font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">{ id ? 'Atualizar' : 'Cadastrar' }</button>
                 </form>
                 <div className="p-2 max-w-xl mx-auto mt-6 flex flex-col">
+                    <span className="text-sm text-red-600 font-bold">{message}</span>
                     {
                         equivalentes.length > 0 &&
                         <span className="text-orange-600 font-medium mb-1">Já existe(m) patrimônio(s) com este número cadastrado(s):</span>

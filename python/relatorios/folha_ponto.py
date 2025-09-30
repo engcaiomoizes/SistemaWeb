@@ -74,7 +74,7 @@ def gerar_folhas(ano, mes, dados, holidays, dias_abertos, caminho_saida):
         elementos.append(Spacer(1,10))
         elementos.append(Paragraph("CARGO/FUNÇÃO: " + str(d["cargo"]).upper(), custom_style))
         elementos.append(Spacer(1,10))
-        elementos.append(Paragraph("SEDE DE SERVIÇO: " + str(d["apelido"].strip() if d.get("apelido") and d["apelido"].strip() else d["nome_local"]).upper(), custom_style))
+        elementos.append(Paragraph("SEDE DE SERVIÇO: " + str(d["apelido"].strip() if d.get("apelido") and d["apelido"].strip() else d["local_nome"]).upper(), custom_style))
         elementos.append(Spacer(1,10))
         elementos.append(Paragraph("RG: " + str(d["rg"]).upper(), custom_style))
         elementos.append(Spacer(1,10))

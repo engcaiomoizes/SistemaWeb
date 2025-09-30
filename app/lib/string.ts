@@ -49,3 +49,14 @@ export function buildStringDate(date: Date) {
 
     return `${newDate.getDate()}/${String(month).padStart(2, '0')}/${newDate.getFullYear()}`;
 }
+
+export function generateRandomString(length: number) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*";
+    let result = "";
+    const randomArray = new Uint8Array(length);
+    crypto.getRandomValues(randomArray);
+    randomArray.forEach((number) => {
+        result += chars[number % chars.length];
+    });
+    return result;
+}

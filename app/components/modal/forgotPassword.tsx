@@ -1,12 +1,44 @@
 'use client';
 
+import { useRouter } from "next/navigation";
 import { SyntheticEvent, useState } from "react";
+import Alert from "../alert";
 
 export default function ForgotPassword(props: any) {
     const [email, setEmail] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState("");
+    const { push } = useRouter();
 
     async function handleSubmit(e: SyntheticEvent) {
         e.preventDefault();
+
+        try {
+            setLoading(true);
+            
+            const response = await fetch('/api/cadastrar/forgot-password', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email,
+                }),
+            });
+
+            if (response.ok) {
+                props.close();
+                sessionStorage.setItem('message', "E-mail enviado! Verifique sua caixa de entrada para obter sua nova senha.");
+                push('/login');
+            } else {
+                console.log("Ocorreu um erro inesperado.");
+                setMessage("E-mail não cadastrado.");
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -20,6 +52,10 @@ export default function ForgotPassword(props: any) {
                         <input type="email" name="email" id="email" autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} className="border-b border-gray-300 w-full outline-none p-1.5 focus:border-teal-600 transition ease-in-out duration-150" required />
                         <button className="cursor-pointer px-4 rounded bg-teal-500 text-white uppercase font-medium text-sm hover:bg-teal-600 transition ease-in-out duration-150">Enviar</button>
                     </form>
+                    {
+                        message && message !== "" &&
+                        <Alert type="error" onClose={() => setMessage("")}>{message}</Alert>
+                    }
                 </div>
             </div>
         </div>

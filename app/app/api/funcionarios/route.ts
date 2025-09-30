@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ message: 'OK', response: funcionarios, count: total }, { status: 200 });
     } catch (err) {
+        console.log(err);
         return NextResponse.json({
             message: 'Error',
             err
@@ -114,7 +115,7 @@ export async function DELETE(req: Request) {
             },
         });
 
-        return NextResponse.json({ message: 'OK', funcionario, log });
+        return NextResponse.json({ message: 'Funcionário deletado com sucesso!', funcionario, log });
     } catch (err) {
         return NextResponse.json({
             message: 'Error',
@@ -136,7 +137,7 @@ export async function PUT(req: Request) {
                 rg: data.rg,
                 matricula: data.matricula,
                 cargo: data.cargo,
-                local: data.local,
+                local: Number(data.local),
                 local_fisico: data.local_fisico,
                 observacoes: data.observacoes,
             }
@@ -151,7 +152,7 @@ export async function PUT(req: Request) {
             },
         });
 
-        return NextResponse.json({ message: 'OK', funcionario, log }, { status: 200 });
+        return NextResponse.json({ message: 'Funcionário atualizado com sucesso!', funcionario, log }, { status: 200 });
     } catch (err) {
         return NextResponse.json({
             message: 'Error',

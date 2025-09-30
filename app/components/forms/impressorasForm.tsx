@@ -82,7 +82,7 @@ export default function ImpressorasForm(props: any) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    id: Number(props.id),
+                    id: props.id,
                     ...formData
                 }),
             });

@@ -18,7 +18,7 @@ export default function RamalList() {
 
     const handleLoadLocais = async () => {
         try {
-            const response = await fetch('/api/locais');
+            const response = await fetch('/api/lista-ramal/unidades');
 
             if (response.ok) {
                 const data = await response.json();
@@ -34,7 +34,7 @@ export default function RamalList() {
 
     const handleLoad = async () => {
         try {
-            const response = await fetch(`/api/ramais?local=${selectedLocal}`);
+            const response = await fetch(`/api/lista-ramal/ramais?local=${selectedLocal}`);
             if (!response.ok) {
                 throw new Error(`Erro ao buscar ramais: ${response.status} - ${response.statusText}`);
             }

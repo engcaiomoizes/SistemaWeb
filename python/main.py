@@ -185,6 +185,8 @@ def gerar_relatorio_patrimonios(request: RequestBodyPatrimonios):
         where_clauses.append(f"l.id IN ({locais_placeholders})")
         parametros.extend(locais)
     
+    where_clauses.append(f"p.baixado = 0")
+    
     where_clause = " AND ".join(where_clauses) if where_clauses else "1=1"
     
     try:
