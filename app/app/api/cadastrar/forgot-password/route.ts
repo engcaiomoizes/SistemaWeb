@@ -18,11 +18,15 @@ export async function POST(req: Request) {
     try {
         const { email } = await req.json();
 
+        console.log(email);
+
         const response = await prisma.usuarios.findFirst({
             where: {
                 email,
             },
         });
+
+        console.log(response);
 
         if (response) {
             const novaSenha = generateRandomString(10);
@@ -64,6 +68,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'E-mail não cadastrado!' }, { status: 400 });
         }
     } catch (err) {
+        console.log(err);
         return NextResponse.json({ message: 'Error', err }, { status: 500 });
     }
 }
